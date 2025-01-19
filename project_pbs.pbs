@@ -1,0 +1,41 @@
+#!/bin/bash
+#Job name
+#PBS -N mpi_matrix_transposition
+
+#Standard output and error log files
+#PBS -o ./output_transposition.o
+#PBS -e ./error_transposition.e
+
+#Queue name
+#PBS -q short_cpuQ
+
+#Maximum wall time
+#PBS -l walltime=00:10:00
+
+#Resources
+#PBS -l select=1:ncpus=32:mpiprocs=32:mem=2gb
+
+#Load necessary modules
+module load gcc91
+module load mpich-3.2.1--gcc-9.1.0
+
+gcc() {
+    gcc-9.1.0 "$@"
+}
+gcc --version
+
+cd /home/andrea.pezzo-1/project_mpi
+
+# Compile command
+mpicc mpi_matrix_transposition.c -fopenmp -o mpi_matrix_transposition
+
+for np in 1 2 4 8 16 32; do
+    echo "Running number of processes= $np"
+
+    #define the range value of N values 
+    for n in $(seq 4 12); do
+        N=$((2**n))
+        echo "Running for N=$N"
+        mpirun -np $np ./mpi_matrix_transposition $N >> results_${N}_${np}.txt
+    done
+done
